@@ -69,7 +69,7 @@ class AudioplayersPlugin : FlutterPlugin, IUpdateCallback {
         response: MethodChannel.Result,
         handler: FlutterHandler,
     ) {
-        mainScope.launch(Dispatchers.IO) {
+        mainScope.launch(Dispatchers.Main) {
             try {
                 handler(call, response)
             } catch (e: Exception) {
@@ -127,7 +127,9 @@ class AudioplayersPlugin : FlutterPlugin, IUpdateCallback {
                 "setSourceUrl" -> {
                     val url = call.argument<String>("url") ?: error("url is required")
                     val isLocal = call.argument<Boolean>("isLocal") ?: false
-                    player.source = UrlSource(url, isLocal)
+                    handler.post {
+                        player.source = UrlSource(url, isLocal)
+                    }
                 }
 
                 "setSourceBytes" -> {
@@ -138,24 +140,24 @@ class AudioplayersPlugin : FlutterPlugin, IUpdateCallback {
                     player.source = BytesSource(bytes)
                 }
 
-                "resume" -> player.play()
-                "pause" -> player.pause()
-                "stop" -> player.stop()
-                "release" -> player.release()
+                "resume" -> handler.post { player.play() }
+                "pause" -> handler.post { player.pause() }
+                "stop" -> handler.post { player.stop() }
+                "release" -> handler.post { player.release() }
                 "seek" -> {
                     val position = call.argument<Int>("position") ?: error("position is required")
-                    player.seek(position)
+                    handler.post { player.seek(position) }
                 }
 
                 "setVolume" -> {
                     val volume = call.argument<Double>("volume") ?: error("volume is required")
-                    player.volume = volume.toFloat()
+                    handler.post { player.volume = volume.toFloat() }
                 }
 
-            "setBalance" -> {
-                val balance = call.argument<Double>("balance") ?: error("balance is required")
-                player.balance = balance.toFloat()
-            }
+                "setBalance" -> {
+                    val balance = call.argument<Double>("balance") ?: error("balance is required")
+                    player.balance = balance.toFloat()
+                }
 
                 "setPlaybackRate" -> {
                     val rate = call.argument<Double>("playbackRate") ?: error("playbackRate is required")
@@ -163,12 +165,16 @@ class AudioplayersPlugin : FlutterPlugin, IUpdateCallback {
                 }
 
                 "getDuration" -> {
-                    response.success(player.getDuration() ?: 0)
+                    handler.post {
+                        response.success(player.getDuration() ?: 0)
+                    }
                     return
                 }
 
                 "getCurrentPosition" -> {
-                    response.success(player.getCurrentPosition() ?: 0)
+                    handler.post {
+                        response.success(player.getCurrentPosition() ?: 0)
+                    }
                     return
                 }
 

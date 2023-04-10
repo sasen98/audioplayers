@@ -165,6 +165,8 @@ class WrappedPlayer internal constructor(
     }
 
     fun isActuallyPlaying(): Boolean {
+        println("Playing: $playing")
+        println("Prepared: $prepared")
         return playing && prepared && player?.isActuallyPlaying() == true
     }
 
@@ -320,7 +322,7 @@ class WrappedPlayer internal constructor(
      */
     private fun createPlayer(): Player {
         return when (playerMode) {
-            MEDIA_PLAYER -> MediaPlayerPlayer(this)
+            MEDIA_PLAYER -> ExoPlayerWrapper(this, ref.getApplicationContext())
             LOW_LATENCY -> SoundPoolPlayer(this, soundPoolManager)
         }
     }
